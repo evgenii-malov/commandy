@@ -1,0 +1,82 @@
+cabal-version:      2.4
+name:               commandy
+version:            0.1.0.0
+synopsis:
+    Simple transport agnostic framework build on concept of command
+
+-- A longer description of the package.
+-- description:
+homepage:
+
+-- A URL where users can report bugs.
+-- bug-reports:
+license:            Apache-2.0
+license-file:       LICENSE
+author:             Evgeniy Malov
+maintainer:         evgeniiml@gmail.com
+
+-- A copyright notice.
+-- copyright:
+category:           Web
+extra-source-files: CHANGELOG.md
+
+library
+    exposed-modules:  
+                    Commandy
+                    Data.Commandy.Types
+                    Data.Commandy.Json
+
+    -- Modules included in this library but not exported.
+    -- other-modules:
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
+    build-depends:    
+        --base ^>=4.14.3.0,   
+        base,
+        validation,        
+        bytestring,
+        text,
+        aeson,        
+        lens
+           
+    hs-source-dirs:   src
+    default-language: Haskell2010
+
+executable commandy
+    main-is:          WS_Server.hs
+
+    -- Modules included in this executable, other than Main.
+    other-modules:
+        Users.Args,
+        Users.Json,
+        Users.Types
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
+    build-depends:
+        --base ^>=4.14.3.0,
+        base,
+        commandy,
+        mysql-simple,
+        mysql,        
+        network,        
+        wai,             
+        websockets,
+        aeson,
+        bytestring,
+        text,
+        lens,
+        either,
+        utf8-string
+
+    hs-source-dirs:   app
+    default-language: Haskell2010
+
+test-suite commandy-test
+    default-language: Haskell2010
+    type:             exitcode-stdio-1.0
+    hs-source-dirs:   test
+    main-is:          CommandyTest.hs
+    build-depends: base    
+                --base ^>=4.14.3.0
