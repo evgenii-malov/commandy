@@ -38,10 +38,13 @@ library
         bytestring,
         text,
         aeson,        
-        lens
+        lens,
+        template-haskell
+
            
     hs-source-dirs:   src
     default-language: Haskell2010
+    --ghc-options: -ddump-splices
 
 executable commandy
     main-is:          WS_Server.hs
@@ -51,6 +54,7 @@ executable commandy
         Users.Args,
         Users.Json,
         Users.Types
+        Users.Mapper
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
@@ -68,10 +72,14 @@ executable commandy
         text,
         lens,
         either,
-        utf8-string
+        utf8-string,
+        template-haskell,
+        th-utilities,
+        containers
 
     hs-source-dirs:   app
     default-language: Haskell2010
+    --ghc-options: -ddump-splices
 
 test-suite commandy-test
     default-language: Haskell2010

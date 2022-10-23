@@ -118,6 +118,18 @@ router_ pd df = case pd of
     putStrLn "domain action done."
     return r
 
+
+router__ :: (ToJSON de, ToJSON dr, ToJSON ae, JsonArgs ae ar) => (Either ae ar) -> (ar -> IO (ErrorOrResult de dr)) -> IO LB.ByteString
+router__ pd df = case pd of
+  (Left es) -> do
+    putStrLn "Action validation fail"
+    return $ encode es
+  (Right args) -> do
+    putStrLn "Action validation ok. Start domain action..."
+    r <- encode <$> (df args)
+    putStrLn "domain action done."
+    return r    
+
 instance ToJSON ResultOk_ where
   toJSON (_) = Data.Aeson.object ["result" .= ("ok" :: String)]
 

@@ -5,6 +5,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Main where
 
@@ -31,6 +32,8 @@ import qualified Network.WebSockets as WS
 import Users.Args
 import Users.Json
 import Users.Types
+import Users.Mapper
+import qualified Data.Commandy.Types as CT
 
 jsonStringAct :: LB.ByteString
 jsonStringAct = "{ \"action\": \"reg\", \"username\": \"John\" , \"email\": \"john@gmail.com\" }"
@@ -47,9 +50,13 @@ exF' t n = do
   result <- eitherDecode t -- "{\"name\":\"Dave\",\"age\":2}"
   flip parseEither result $ \obj -> obj .: n
 
+$(srouter "regRouter" 'RegArgs ''RegArgs ''RegArgsErrors 'reg)
+
 router :: LB.ByteString -> IO LB.ByteString
 router b = case act of
-  Right "reg" -> router_ (parseCmdfromJson b) reg
+  Right "reg" -> do -- $(srouter ''RegArgs ''RegArgsErrors) b
+                    regRouter b
+                    --router_ (parseCmdfromJson b) reg
   Right act -> do
     putStrLn "recieved uncknown act!"
     return $ "uncknown act " `mappend` LBU8.fromString act

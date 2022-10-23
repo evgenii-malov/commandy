@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FunctionalDependencies #-}
 
 module Data.Commandy.Types
   ( ErrorOrResult (..),
@@ -13,6 +14,7 @@ module Data.Commandy.Types
     Password,
     PasswordValidationError,
     JWTToken,
+    fromString
   )
 where
 
@@ -20,8 +22,13 @@ import Control.Lens hiding ((.=))
 import Data.List (isInfixOf)
 import Data.Validation
 import GHC.Generics
-
+import qualified Data.ByteString.Lazy as LB
+import qualified Data.ByteString.Lazy.Char8 as CH8
 -- ***** Types *****
+
+class FromString e r | r -> e where
+  fromString :: String -> Either [e] r -- LB.ByteString
+
 
 newtype AtString = AtString String deriving (Show)
 
@@ -66,6 +73,9 @@ nonEmptyString x =
 
 -- ***** Combining smart constructors *****
 
+instance FromString EmailValidationError Email where
+  fromString = toEither.makeEmail -- .CH8.unpack 
+
 makeEmail :: String -> Validation [EmailValidationError] Email
 makeEmail x =
   Email x
@@ -103,6 +113,9 @@ makeUsername x =
   UserName x
     <$ nonBigUsername x
     <* nonSmallUsername x
+
+instance FromString UserNameValidationError UserName where
+  fromString = toEither.makeUsername -- .CH8.unpack     
 
 type Password = String
 
