@@ -55,12 +55,21 @@ data LoginArgs = LoginArgs
   }
   deriving (Show)
 
-data LoginError
+data LoginArgsErrors
   = UserBanned Email
   | OtherLoginError String
   deriving (Generic, Show)
 
-login :: LoginArgs -> IO (ErrorOrResult RegError ResultOk_)
+login :: LoginArgs -> IO (ErrorOrResult LoginArgsErrors ResultOk_)
 login args = do
   putStrLn "implement login please!"
+  return $ DResult ROK_
+
+data NoErrors = NoErrors deriving (Generic, Show)
+
+data UsersListArgs = UsersListArgs deriving (Generic, Show)
+
+userlist :: UsersListArgs -> IO (ErrorOrResult NoErrors ResultOk_)
+userlist args = do
+  putStrLn "implement show all users please!"
   return $ DResult ROK_

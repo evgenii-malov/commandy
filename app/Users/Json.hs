@@ -17,5 +17,14 @@ import Users.Types
 instance ToJSON RegArgsErrors where
   toEncoding = genericToEncoding defaultOptions
 
+instance ToJSON LoginArgsErrors where
+  toEncoding = genericToEncoding defaultOptions  
+
 instance ToJSON RegError where
   toEncoding = genericToEncoding defaultOptions
+
+instance ToJSON NoErrors where
+  toEncoding = genericToEncoding defaultOptions  
+
+instance ToJSON UsersListArgs where
+  toEncoding = genericToEncoding defaultOptions    

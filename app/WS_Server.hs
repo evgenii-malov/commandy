@@ -49,6 +49,10 @@ exF' t n = do
 $(srouter "regRouter" ''RegArgs 'reg)
 $(srouter "loginRouter" ''LoginArgs 'login)
 
+-- TODO : implement template haskell routing with empty args !
+
+-- $(srouter "userlist" ''UsersListArgs 'userlist)
+
 router :: LB.ByteString -> IO LB.ByteString
 router b = case act of
   -- this routing can be done via template haskell generation.. need it ?
