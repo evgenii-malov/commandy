@@ -56,6 +56,12 @@ tMapping = M.fromList [
 -- eex_ = [e| \d k -> ((fromRight undefined) . CT.fromString) <$> (exF d k) |]
 -- eex = [e| \d k -> fromJust $ ((fromRight undefined) . CT.fromString) <$> (exF d k) |]  
 
+x_Errs :: Type -> Q Exp
+x_Errs ft = [e| \d k -> errs $ ((CT.fromString))::$(ft) <$> (exF d k) |]
+x_Errs_ :: Type -> Q Exp
+x_Errs_ ft = [e| \d k -> errs_ $ ((CT.fromString))::$(ft) <$> (exF d k) |]
+
+
 srouter :: String -> Name -> Name -> Name -> Name -> Q [Dec]
 srouter name rc r e dact = do
   -- https://hackage.haskell.org/package/template-haskell-2.19.0.0/docs/src/Language.Haskell.TH.Syntax.html#TyConI
@@ -80,7 +86,12 @@ srouter name rc r e dact = do
   -- exv <- [e| \d k -> fromJust $ (CT.fromString) <$> (exF d k) |]
 
   exv <- [e| \d k -> ((CT.fromString)) <$> (exF d k) |]
-  
+
+-- errs :: Monoid a => Maybe (Either a b) -> FieldRequired a
+-- errs_ :: Monoid a => Maybe (Either a b) -> a
+  ex_errs <- [e| \d k -> errs $ ((CT.fromString)) <$> (exF d k) |]
+  ex_errs_ <- [e| \d k -> errs_ $ ((CT.fromString)) <$> (exF d k) |]
+
   
   --let apply_cons = \c args_types rdt -> [e| foldl (AppE) (ConE c) [  (AppE (AppE (if fns == "email" then  eex else eex_ ) rdt ) (LitE $ StringL fns))  | (fns,ft) <- args_types] |]
   --apply_cons <- [e| \c args_types rdt -> foldl (AppE) (ConE c) [  (AppE (AppE (if fns == "email" then  eex else eex_ ) rdt ) (LitE $ StringL fns))  | (fns,ft) <- args_types] |]
@@ -100,7 +111,7 @@ srouter name rc r e dact = do
           -- lookupTypeName ??
 
           -- putStrLn $ "injected!" ++ (nameBase cn) ++ (nameBase n2) ++ (show n2t) ++ (show te)
-          putStrLn $ "injected!" ++ (show args_and_types) ++ "\n" ++  "\n" ++ (show dact_)
+          -- putStrLn $ "injected!" ++ (show args_and_types) ++ "\n" ++  "\n" ++ (show dact_)
           --putStrLn $ "---1"
           --putStrLn $ (show rc_)
           --putStrLn $ "---2"
@@ -109,68 +120,59 @@ srouter name rc r e dact = do
           -- check any errors
           -- if no arrors build args
           -- if error build errors
-
-          -- let p1 = ((fromRight undefined) . CT.fromString <$> exF rdata "username" ) -- :: Maybe CT.UserName
-          --let p2 = (fromJust ((fromRight undefined) . CT.fromString <$> exF rdata "email")) -- :: CT.Email          
-            -- let p1 = ex_ rdata "username"
-            -- let p2 = ex rdata "email"
-          -- $(LetS [ValD (VarP (mkName "p1")) (NormalB [e| ex rdata "username" |])])
-          
-
-          -- $(return $ )
           --let fnames = ["p1","p2"]          
           -- make AST, wrap it into Q, splice with $ and bind name args to constructed code
-          --foldl (AppE) (ConE rc) [VarE (mkName "p1"),VarE (mkName "p2")]
-          --let args = $(return $ AppE (AppE (ConE rc) $ VarE (mkName "p1")) $ VarE (mkName "p2"))
-          
-          -- TODO !!! REMOVE VarE (mkName fns) REPLACE WITH AppE (AppE $ (VarE (mkName ex)) rdata) VarE (mkName fns)  "username"
-          -- let args = $(return $ foldl (AppE) (ConE rc) [VarE (mkName fns) | fns <- ["p1","p2"]])
-          
-          --let args = $(return $ foldl (AppE) (ConE rc) [ SigE (ParensE (AppE (AppE (if fns == "email" then  (VarE (mkName "ex")) else (VarE (mkName "ex_")) ) (VarE (mkName "rdata")) ) (LitE $ StringL fns))) $ if fns == "username" then AppT (ConT (mkName "Maybe")) (ConT (mkName ft) ) else (ConT (mkName ft))  | (fns,ft) <- [("username","Data.Commandy.Types.UserName"),("email","Data.Commandy.Types.Email")]])
-          
-          --let args = $(return $ foldl (AppE) (ConE rc) [ SigE (ParensE (AppE (AppE (if fns == "email" then  eex else eex_ ) (VarE (mkName "rdata")) ) (LitE $ StringL fns))) $ if fns == "username" then AppT (ConT (mkName "Maybe")) (ConT (mkName ft) ) else (ConT (mkName ft))  | (fns,ft) <- [("username" ,"Data.Commandy.Types.UserName"),("email" ,"Data.Commandy.Types.Email")]])
-          
-          --let hasErrs = any id [if ismaybe ft then e_ $ (CT.fromString <$> exF rdata k) else e $ (CT.fromString <$> exF rdata k) | (k,ft) <- args_and_types]
-
                     
           let args = $(let 
                           ce = ConE rc 
-                          barg fns ismb = (AppE (AppE (if ismb then eex_ else eex ) (VarE (mkName "rdata")) ) (LitE $ StringL fns))                        
+                          barg fns ismb = (AppE (AppE (if ismb then eex_ else eex ) (VarE 'rdata) ) (LitE $ StringL fns))                        
                         in 
                          return $ foldl (AppE) ce [ barg fns ismb | (fns, _, ismb) <- args_and_types])
-
                   
-
           let is_verrors = $(let 
-                              ff = VarE $ mkName $ "||"
-                              barg fns = (AppE (AppE exv (VarE (mkName "rdata")) ) (LitE $ StringL fns))
-                              --dsig e ft = SigE e $ (AppT (AppT (ConT ''Either) (AppT ListT ((tMapping M.! (tname ft) )))) ft)
-                              dsig_ e ft = SigE e $ AppT (ConT ''Maybe) (AppT (AppT (ConT ''Either) (AppT ListT ((tMapping M.! (tname ft))))) ft)                                                            
-                              chose_e ft = if ismaybe ft then (VarE (mkName "e_")) else (VarE (mkName "e"))
-                            in 
-                              --return $ foldl (AppE) ff [ (if ismaybe ft then AppE (VarE (mkName "e_")) $ dsig_ (barg fns) ft else AppE (VarE (mkName "e")) $ dsig_ (barg fns) ft) | (fns,ft,ismb) <- args_and_types])
-                              return $ foldl (AppE) ff [ (AppE (chose_e ft) $ dsig_ (barg fns) ft) | (fns,ft,ismb) <- args_and_types])
+                              ff = VarE '(||)
+                              barg fns = (AppE (AppE exv (VarE 'rdata) ) (LitE $ StringL fns))                              
+                              dsig_ e ft = SigE e $ AppT (ConT ''Maybe) (AppT (AppT (ConT ''Either) (AppT ListT ((tMapping M.! (tname ft)))) ) ft)                                                            
+                              chose_e ft = if ismaybe ft then (VarE 'CD.e_) else (VarE 'CD.e)
+                            in                               
+                              return $ foldl (AppE) ff [ (AppE (chose_e ft) $ dsig_ (barg fns) ft) | (fns,ft,ismb) <- args_and_types])          
 
-
-
-
-          
-
-          
-          -- let args = $(return [|apply_cons rc args_and_types (VarE (mkName "rdata"))|])
-          -- let args = $(apply_cons rc args_and_types (VarE (mkName "rdata")))
-
-
-          --let args = $(return $  (foldl (AppE) (ConE rc)  [ (AppE (AppE (if fns == "email" then  (VarE (mkName "ex")) else (VarE (mkName "ex_")) ) (VarE (mkName "rdata")) ) (LitE $ StringL fns))  | (fns,ft) <- [("username","Data.Commandy.Types.UserName"),("email","Data.Commandy.Types.Email")]]) )
-          
-          
-          -- SigE (VarE (mkName "ex_")) $ VarT (mkName "UserName")
-          --let args = $(return $ foldl (AppE) (ConE rc) [$([| ex |]) rdata "username" | fns <- ["p1","p2"]])
           putStrLn $ show is_verrors 
           
-          router_ (Right args) $(return $ (VarE dact))
-          --router_ (Right $(return $ VarE (mkName "args") )) $(return $ (VarE dact))
-                                 
+          -- $(let
+          --     -- build json value (toJson)
+          --      errs fn ismb rdata = AppE (VarE 'toJSON) (SigE (LitE $ StringL "some errors") $ ConT ''String) 
+          --   in return $ AppE (VarE 'object) $ ListE [AppE (AppE (VarE '(.=)) (LitE (StringL fn))) (SigE (errs fn ismb 'rdata) (ConT ''Value)  ) | (fn,ft,ismb) <- args_and_types])
+
+          let erros_value = $(let
+                                -- build json value (toJson)
+                                --buildt ft ismb = if ismb then (AppT ListT ((tMapping M.! (tname ft)))) else AppT (ConT ''CD.FieldRequired) (AppT ListT ((tMapping M.! (tname ft))))
+                                --berrs fns ismb ft = SigE (AppE (AppE (if ismb then ex_errs_ else ex_errs ) (VarE 'rdata) ) (LitE $ StringL fns)) $ buildt ft ismb
+
+                                barg fns = (AppE (AppE exv (VarE 'rdata) ) (LitE $ StringL fns))                              
+                                dsig_ e ft = SigE e $ AppT (ConT ''Maybe) (AppT (AppT (ConT ''Either) (AppT ListT ((tMapping M.! (tname ft)))) ) ft)   
+                                chose_e ft = if ismaybe ft then (VarE 'CD.errs_) else (VarE 'CD.errs)
+
+                                -- errs fn ismb rdata = AppE (VarE 'toJSON) (SigE (LitE $ StringL "some errors") $ ConT ''String)                                 
+                            in return $ AppE (VarE 'object) $ ListE [AppE (AppE (VarE '(.=)) (LitE (StringL fn))) (AppE (chose_e ft) $ dsig_ (barg fn) ft) | (fn,ft,ismb) <- args_and_types])
+          --let erros_value = toJSON $ ("123" :: String)
+
+          if not is_verrors then router_ (Right args) $(return $ (VarE dact)) else return $ encode erros_value                  
+
+          -- {-# LANGUAGE OverloadedStrings #-}
+          -- :set -XOverloadedStrings
+          -- object :: [Pair] -> Value
+          
+          -- customValue :: Value
+          -- customValue = object
+          --   [ "list_price" .= (150000 :: Int)
+          --   , "sale_price" .= (143000 :: Int)
+          --   , "description" .= ("2-bedroom townhouse" :: String)
+          --   ]
+
+          
+
+
       |]
 
   let funName = mkName name
