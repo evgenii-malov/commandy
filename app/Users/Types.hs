@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Users.Types where
@@ -35,16 +36,31 @@ data RegError
   deriving (Generic, Show)
 
 reg :: RegArgs -> IO (ErrorOrResult RegError ResultOk_)
-reg args = do
-  --error "catch me!"
+reg (args@RegArgs {username = username, email = email}) = do
+  -- error "catch me!"
   print args
-  let eml = email args
-  let uname = fromMaybe "NULL" (show <$> username args)
-  let qargs = [show eml, "16", uname]
+  let uname = fromMaybe "NULL" (show <$> username)
+  let qargs = [show email, "16", uname]
   conn <- connect defaultConnectInfo {connectPassword = "root", connectDatabase = "test"}
 
   do
     r <- (try $ execute conn ("insert into user (email,age,name) values (?,?,?)") qargs) :: IO (Either MySQLError Int64)
     case r of
-      Left e -> if errNumber e == 1062 then return . DError $ EmailUsed eml else error "something WRONG!"
+      Left e -> if errNumber e == 1062 then return . DError $ EmailUsed email else error "something WRONG!"
       Right _ -> do uid <- insertID conn; print $ "uid" ++ show uid; return $ DResult ROK_
+
+data LoginArgs = LoginArgs
+  { email :: Email,
+    pwd :: Password
+  }
+  deriving (Show)
+
+data LoginError
+  = UserBanned Email
+  | OtherLoginError String
+  deriving (Generic, Show)
+
+login :: LoginArgs -> IO (ErrorOrResult RegError ResultOk_)
+login args = do
+  putStrLn "implement login please!"
+  return $ DResult ROK_

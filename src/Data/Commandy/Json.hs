@@ -107,28 +107,6 @@ class JsonArgs e r | r -> e where
 -- collect_errors :: a -> Maybe T.Text -- json errors
 -- is_success :: a -> Bool
 
-router_ :: (ToJSON de, ToJSON dr, ToJSON ae, JsonArgs ae ar) => (Either ae ar) -> (ar -> IO (ErrorOrResult de dr)) -> IO LB.ByteString
-router_ pd df = case pd of
-  (Left es) -> do
-    putStrLn "Action validation fail"
-    return $ encode es
-  (Right args) -> do
-    putStrLn "Action validation ok. Start domain action..."
-    r <- encode <$> (df args)
-    putStrLn "domain action done."
-    return r
-
-
-router__ :: (ToJSON de, ToJSON dr, ToJSON ae, JsonArgs ae ar) => (Either ae ar) -> (ar -> IO (ErrorOrResult de dr)) -> IO LB.ByteString
-router__ pd df = case pd of
-  (Left es) -> do
-    putStrLn "Action validation fail"
-    return $ encode es
-  (Right args) -> do
-    putStrLn "Action validation ok. Start domain action..."
-    r <- encode <$> (df args)
-    putStrLn "domain action done."
-    return r    
 
 instance ToJSON ResultOk_ where
   toJSON (_) = Data.Aeson.object ["result" .= ("ok" :: String)]
@@ -152,3 +130,10 @@ instance ToJSON UserName where
 
 instance ToJSON UserNameValidationError where
   toEncoding = genericToEncoding defaultOptions
+
+instance ToJSON PasswordValidationError where
+  toEncoding = genericToEncoding defaultOptions  
+
+instance ToJSON Password where
+  toEncoding = genericToEncoding defaultOptions  
+

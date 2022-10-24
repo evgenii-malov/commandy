@@ -21,6 +21,7 @@ import qualified Data.ByteString.Lazy as LB
 import qualified Data.ByteString.Lazy.UTF8 as LBU8
 import Data.Commandy.Json
 import Data.Commandy.Types
+import qualified Data.Commandy.Types as CT
 import Data.Either (fromLeft, fromRight, isLeft)
 import qualified Data.Either.Combinators as EithQ
 import Data.Maybe
@@ -31,32 +32,28 @@ import GHC.Generics
 import qualified Network.WebSockets as WS
 import Users.Args
 import Users.Json
-import Users.Types
 import Users.Mapper
-import qualified Data.Commandy.Types as CT
+import Users.Types
 
 jsonStringAct :: LB.ByteString
 jsonStringAct = "{ \"action\": \"reg\", \"username\": \"John\" , \"email\": \"john@gmail.com\" }"
 
 jsonStringAct2 = "{ \"action\": \"reg\", \"username\": \"John\" , \"email\": \"john!gmail.com\" }" :: LB.ByteString
 
--- re = RegArgsErrors {username_error = [], email_error = FieldRequired}
--- re2 = RegArgsErrors {username_error = [], email_error = FieldErrors [MustContainAt, MustNotBeEmpty]}
-
--- !!! catch parse error !!!
-
 exF' :: FromJSON b => LB.ByteString -> Key -> Either String b
 exF' t n = do
   result <- eitherDecode t -- "{\"name\":\"Dave\",\"age\":2}"
   flip parseEither result $ \obj -> obj .: n
 
-$(srouter "regRouter" 'RegArgs ''RegArgs ''RegArgsErrors 'reg)
+-- !!! APPEND ROUTES HERE - TEMPLATE HASKELL GENERATION !!!
+$(srouter "regRouter" ''RegArgs 'reg)
+$(srouter "loginRouter" ''LoginArgs 'login)
 
 router :: LB.ByteString -> IO LB.ByteString
 router b = case act of
-  Right "reg" -> do -- $(srouter ''RegArgs ''RegArgsErrors) b
-                    regRouter b
-                    --router_ (parseCmdfromJson b) reg
+  -- this routing can be done via template haskell generation.. need it ?
+  Right "reg" -> regRouter b
+  Right "login" -> loginRouter b
   Right act -> do
     putStrLn "recieved uncknown act!"
     return $ "uncknown act " `mappend` LBU8.fromString act
@@ -106,3 +103,4 @@ main =
 -- env vars https://hackage.haskell.org/package/load-env
 -- polling
 -- ddos
+-- primitive types
