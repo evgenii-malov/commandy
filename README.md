@@ -12,6 +12,8 @@ Commandy is simple Web framework written in Haskell
 - easy to change command data representation (json, grpc, row text, etc)
 
 
+Here's an example:
+
 ```haskell
 
 data RegArgs = RegArgs
