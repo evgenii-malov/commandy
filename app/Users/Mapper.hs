@@ -72,26 +72,16 @@ srouter name r dact = do
       rt :: LB.ByteString -> IO LB.ByteString
       rt rdata =
         do
-          -- let x = 1 :: Int
-          -- print d
-          -- RegArgs
-          -- \$(ConT dact)
-          -- \$([t|ConT dact|])  - extract Data Cons ?
-          -- \$([e| constr |])
-          -- \$(return $ RecConE r [])
+          
           -- lookupTypeName ??
-
-          -- putStrLn $ "injected!" ++ (nameBase cn) ++ (nameBase n2) ++ (show n2t) ++ (show te)
+          
           -- putStrLn $ "injected!" ++ (show args_and_types) ++ "\n" ++  "\n" ++ (show dact_)
-          -- putStrLn $ "---1"
-          -- putStrLn $ (show rc_)
-          -- putStrLn $ "---2"
+          
           -- extract fields values from jsom
           -- apply SmartConstructors to fields
           -- check any errors
           -- if no arrors build args
-          -- if error build errors
-          -- let fnames = ["p1","p2"]
+          -- if error build errors as json value and encode it          
           -- make AST, wrap it into Q, splice with $ and bind name args to constructed code
 
           let args =
