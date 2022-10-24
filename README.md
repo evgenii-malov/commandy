@@ -1,4 +1,4 @@
-# commandy
+# Commandy
 
 
 Commandy is simple Web framework written in Haskell
