@@ -4,7 +4,7 @@
 Commandy is simple Web framework written in Haskell
 
 - define your domain commands as types
-- define your domain commnads results as types
+- define your domain commands results as types
 - define all your fields with smart constructor validation
 - implicit mapping of json objects to command types (via template haskell mapper)
 - auto generation of all errors or success result
